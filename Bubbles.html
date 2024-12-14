@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bubbles App</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f3f3f3;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        h1 {
+            margin-top: 20px;
+            font-size: 24px;
+        }
+
+        canvas {
+            border: 2px solid black;
+            background: white;
+        }
+
+        .controls {
+            margin-top: 10px;
+            width: 800px;
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        button {
+            padding: 8px 15px;
+            font-size: 14px;
+            cursor: pointer;
+            background: #ddd;
+            border: 1px solid #aaa;
+        }
+
+        button:hover {
+            background: #bbb;
+        }
+    </style>
+</head>
+<body>
+    <h1>Bubbles App</h1>
+    <canvas id="canvas" width="800" height="400"></canvas>
+    <div class="controls">
+        <button id="resetBtn">Reset</button>
+    </div>
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+
+        // Initial configurations
+        const circles = [
+            { x: 120, y: 80, color: "yellow", hitColor: "gray", hit: false },
+            { x: 120, y: 170, color: "blue", hitColor: "lightblue", hit: false },
+            { x: 120, y: 260, color: "red", hitColor: "pink", hit: false },
+            { x: 120, y: 350, color: "green", hitColor: "lightgreen", hit: false }
+        ];
+        const arrows = Array(circles.length).fill(700); // Arrows start on the right
+        const speeds = Array(circles.length).fill(0); // Arrows start stationary
+        const radius = 40;
+
+        // Function to draw everything
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Draw circles
+            for (let i = 0; i < circles.length; i++) {
+                const circle = circles[i];
+                ctx.beginPath();
+                ctx.arc(circle.x, circle.y, radius, 0, Math.PI * 2);
+                ctx.fillStyle = circle.hit ? circle.hitColor : circle.color;
+                ctx.fill();
+                ctx.lineWidth = 2;
+                ctx.stroke();
+                ctx.closePath();
+            }
+
+            // Draw arrows
+            for (let i = 0; i < circles.length; i++) {
+                const arrowX = arrows[i];
+                const arrowY = circles[i].y;
+
+                ctx.beginPath();
+                ctx.moveTo(arrowX, arrowY);
+                ctx.lineTo(arrowX - 30, arrowY); // Arrow shaft
+                ctx.lineWidth = 3;
+                ctx.strokeStyle = "black";
+                ctx.stroke();
+
+                // Arrowhead
+                ctx.beginPath();
+                ctx.moveTo(arrowX - 30, arrowY);
+                ctx.lineTo(arrowX - 10, arrowY - 10);
+                ctx.lineTo(arrowX - 10, arrowY + 10);
+                ctx.fillStyle = "black";
+                ctx.fill();
+                ctx.closePath();
+            }
+        }
+
+        // Update arrow positions and detect collisions
+        function update() {
+            for (let i = 0; i < arrows.length; i++) {
+                if (speeds[i] > 0) {
+                    arrows[i] -= speeds[i];
+                    if (arrows[i] <= circles[i].x + radius) {
+                        arrows[i] = circles[i].x + radius;
+                        speeds[i] = 0; // Stop arrow
+                        circles[i].hit = true; // Mark circle as hit
+                    }
+                }
+            }
+            draw();
+        }
+
+        // Reset everything to initial state
+        function reset() {
+            for (let i = 0; i < circles.length; i++) {
+                arrows[i] = 700;
+                speeds[i] = 0;
+                circles[i].hit = false;
+            }
+            draw();
+        }
+
+        // Handle click on canvas
+        canvas.addEventListener('click', function (event) {
+            const rect = canvas.getBoundingClientRect();
+            const mouseX = event.clientX - rect.left;
+            const mouseY = event.clientY - rect.top;
+
+            for (let i = 0; i < circles.length; i++) {
+                const circle = circles[i];
+                const dx = mouseX - circle.x;
+                const dy = mouseY - circle.y;
+
+                // Check if click is inside circle
+                if (Math.sqrt(dx * dx + dy * dy) <= radius && !circle.hit) {
+                    speeds[i] = 5; // Start moving the arrow
+                }
+            }
+        });
+
+        // Initialize everything
+        draw();
+        setInterval(update, 30);
+
+        // Reset button
+        document.getElementById('resetBtn').addEventListener('click', reset);
+    </script>
+</body>
+</html>
